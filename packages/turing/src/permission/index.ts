@@ -144,8 +144,15 @@ interface State {
 }
 
 export function evaluate(permission: string, pattern: string, ...rulesets: Ruleset[]): Rule {
-  log.info("evaluate", { permission, pattern, ruleset: rulesets.flat() })
-  return evalRule(permission, pattern, ...rulesets)
+  const rule = evalRule(permission, pattern, ...rulesets)
+  log.info("evaluate", {
+    permission,
+    pattern,
+    action: rule.action,
+    matched: { permission: rule.permission, pattern: rule.pattern },
+    rulesetSize: rulesets.reduce((acc, r) => acc + r.length, 0),
+  })
+  return rule
 }
 
 export class Service extends Context.Service<Service, Interface>()("@turing/Permission") {}

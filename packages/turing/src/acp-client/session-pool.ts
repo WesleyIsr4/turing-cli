@@ -74,11 +74,17 @@ export interface PoolAcquireOptions {
  */
 export class ACPSessionPool {
   #entries = new Map<string, PoolEntry>()
+  #pending = new Map<string, Promise<{ ok: true; entry: PoolEntry } | (AuthCheckResult & { ok: false })>>()
 
   /**
    * Get the existing entry for this turing session if still alive, otherwise
    * spawn + initialize + newSession and cache the entry. The provided update
    * handler and permission resolver are captured per-entry (not per-acquire).
+   *
+   * Concurrent calls for the same key share a single in-flight acquire
+   * (`#pending`) so we never spawn duplicate subprocesses when the caller
+   * pipeline races us — this used to leak ghost ACP processes whose
+   * permission rulesets stayed alive but were unreferenced.
    *
    * If the agent failed auth pre-flight, returns `{ ok: false, message }`.
    */
@@ -97,6 +103,22 @@ export class ACPSessionPool {
       this.#entries.delete(key)
     }
 
+    const inflight = this.#pending.get(key)
+    if (inflight) return inflight
+
+    const promise = this.#spawnEntry(opts, key)
+    this.#pending.set(key, promise)
+    try {
+      return await promise
+    } finally {
+      this.#pending.delete(key)
+    }
+  }
+
+  async #spawnEntry(
+    opts: PoolAcquireOptions,
+    key: string,
+  ): Promise<{ ok: true; entry: PoolEntry } | (AuthCheckResult & { ok: false })> {
     const agent = getAgent(opts.agentId)
 
     const auth = await checkAgentAuth(agent)
