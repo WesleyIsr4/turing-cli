@@ -11,7 +11,7 @@ AI-powered development tool for the terminal. CLI built on top of [Claude Code](
 ### One-line install (Linux, macOS)
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/WesleyIsr4/turing-cli/main/install.sh | sh
+curl -fsSL https://github.com/WesleyIsr4/turing-cli/releases/latest/download/install.sh | sh
 ```
 
 This downloads the latest pre-built binary for your OS/architecture from GitHub Releases and installs it at `~/.local/bin/turing`. Make sure `~/.local/bin` is in your `PATH`.

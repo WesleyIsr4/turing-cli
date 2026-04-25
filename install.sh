@@ -4,7 +4,7 @@
 # Detects OS/arch and installs the latest pre-built binary to ~/.local/bin/turing.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/WesleyIsr4/turing-cli/main/install.sh | sh
+#   curl -fsSL https://github.com/WesleyIsr4/turing-cli/releases/latest/download/install.sh | sh
 #
 # Environment overrides:
 #   TURING_VERSION  install a specific version (e.g. v0.1.0). Defaults to latest.
