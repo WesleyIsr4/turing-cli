@@ -1342,6 +1342,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           const hasToolCalls =
             lastAssistantMsg?.parts.some((part) => part.type === "tool" && !part.metadata?.providerExecuted) ?? false
 
+          yield* slog.info("loop.exitCheck", {
+            step,
+            assistantFinish: lastAssistant?.finish ?? null,
+            hasToolCalls,
+            lastUserId: lastUser.id,
+            lastAssistantId: lastAssistant?.id ?? null,
+            assistantPartTypes: lastAssistantMsg?.parts.map((p) => p.type) ?? [],
+          })
+
           if (
             lastAssistant?.finish &&
             !["tool-calls"].includes(lastAssistant.finish) &&
