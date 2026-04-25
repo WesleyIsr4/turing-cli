@@ -34,8 +34,16 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Resolve version from tag
+        id: version
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
       - name: Build cross-platform binaries
         run: bun run --cwd packages/turing build --skip-embed-web-ui
+        env:
+          TURING_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Package binaries
         working-directory: packages/turing/dist
