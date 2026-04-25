@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
-# turing-cli installer
+# turing-cli installer (POSIX sh)
 # Detects OS/arch and installs the latest pre-built binary to ~/.local/bin/turing.
 #
 # Usage:
@@ -11,7 +11,7 @@
 #   TURING_PREFIX   install directory. Defaults to $HOME/.local/bin.
 #
 
-set -euo pipefail
+set -eu
 
 REPO="WesleyIsr4/turing-cli"
 PREFIX="${TURING_PREFIX:-$HOME/.local/bin}"
@@ -63,8 +63,7 @@ info "Extracting"
 unzip -q "$TMP/$ASSET" -d "$TMP"
 
 # The build script outputs dist/<target>/bin/turing inside the zip.
-BIN="$(find "$TMP" -type f -name turing -perm -u+x | head -n 1)"
-[ -n "$BIN" ] || BIN="$(find "$TMP" -type f -name turing | head -n 1)"
+BIN="$(find "$TMP" -type f -name turing | head -n 1)"
 [ -n "$BIN" ] || err "binary not found in archive"
 
 mkdir -p "$PREFIX"
