@@ -1,0 +1,21 @@
+{
+  "jsonrpc": "2.0",
+  "method": "session/update",
+  "params": {
+    "sessionId": "cc175e55-ce62-4a4d-a2f9-129e91f79c27",
+    "update": {
+      "_meta": {
+        "claudeCode": {
+          "toolName": "Bash"
+        }
+      },
+      "toolCallId": "toolu_01YGTctgeQs4jUJ5oMm85cnB",
+      "sessionUpdate": "tool_call",
+      "rawInput": {},
+      "status": "pending",
+      "title": "Terminal",
+      "kind": "execute",
+      "content": []
+    }
+  }
+}

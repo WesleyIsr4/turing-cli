@@ -1,0 +1,30 @@
+{
+  "jsonrpc": "2.0",
+  "method": "session/update",
+  "params": {
+    "sessionId": "21066a69-7f56-48b6-886b-4c67d24e671f",
+    "update": {
+      "sessionUpdate": "available_commands_update",
+      "availableCommands": [
+        {
+          "name": "update-config",
+          "description": "Use this skill to configure the Claude Code harness via settings.json. Automated behaviors (\"from now on when X\", \"each time X\", \"whenever X\", \"before/after X\") require hooks configured in settings.json - the harness executes these, not Claude, so memory/preferences cannot fulfill them. Also use for: permissions (\"allow X\", \"add permission\", \"move permission to\"), env vars (\"set X=Y\"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: \"allow npm commands\", \"add bq permission to global settings\", \"move permission to user settings\", \"set DEBUG=true\", \"when claude stops show X\". For simple settings like theme/model, use Config tool.",
+          "input": null
+        },
+        {
+          "name": "debug",
+          "description": "Enable debug logging for this session and help diagnose issues",
+          "input": {
+            "hint": "[issue description]"
+          }
+        },
+        {
+          "name": "simplify",
+          "description": "Review changed code for reuse, quality, and efficiency, then fix any issues found.",
+          "input": null
+        }
+      ]
+    }
+  },
+  "_truncated_note": "Original contained 500+ commands from local user skills. Truncated to 3 for fixture size."
+}

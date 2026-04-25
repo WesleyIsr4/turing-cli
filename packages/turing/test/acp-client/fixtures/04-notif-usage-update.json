@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "method": "session/update",
+  "params": {
+    "sessionId": "21066a69-7f56-48b6-886b-4c67d24e671f",
+    "update": {
+      "sessionUpdate": "usage_update",
+      "used": 46059,
+      "size": 200000
+    }
+  }
+}

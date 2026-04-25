@@ -1,0 +1,34 @@
+.DS_Store
+node_modules
+.worktrees
+.sst
+.env
+.idea
+.vscode
+.zed
+.codex
+*~
+playground
+tmp
+dist
+ts-dist
+.turbo
+**/.serena
+.serena/
+/result
+refs
+Session.vim
+a.out
+target
+.scripts
+.direnv/
+
+# Local dev files
+logs/
+*.bun-build
+tsconfig.tsbuildinfo
+session.json
+
+# Internal docs and dogfood configs (not for distribution)
+docs/
+.turing/
