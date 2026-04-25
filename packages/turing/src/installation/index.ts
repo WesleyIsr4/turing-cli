@@ -142,12 +142,16 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
 
       const upgradeCurl = Effect.fnUntraced(
         function* (target: string) {
-          const response = yield* httpOk.execute(HttpClientRequest.get("https://turing.ai/install"))
+          const response = yield* httpOk.execute(
+            HttpClientRequest.get(
+              "https://github.com/WesleyIsr4/turing-cli/releases/latest/download/install.sh",
+            ),
+          )
           const body = yield* response.text
           const bodyBytes = new TextEncoder().encode(body)
-          const proc = ChildProcess.make("bash", [], {
+          const proc = ChildProcess.make("sh", [], {
             stdin: Stream.make(bodyBytes),
-            env: { VERSION: target },
+            env: { TURING_VERSION: target.startsWith("v") ? target : `v${target}` },
             extendEnv: true,
           })
           const handle = yield* spawner.spawn(proc)
@@ -249,7 +253,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         }
 
         const response = yield* httpOk.execute(
-          HttpClientRequest.get("https://api.github.com/repos/trinca/turing/releases/latest").pipe(
+          HttpClientRequest.get("https://api.github.com/repos/WesleyIsr4/turing-cli/releases/latest").pipe(
             HttpClientRequest.acceptJson,
           ),
         )
