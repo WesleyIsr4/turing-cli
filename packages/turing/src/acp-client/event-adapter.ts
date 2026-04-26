@@ -19,6 +19,7 @@ export type AISdkStreamPart =
       id: string
       toolName: string
       title?: string
+      providerExecuted?: boolean
       providerMetadata?: Record<string, unknown>
     }
   | {
@@ -26,6 +27,7 @@ export type AISdkStreamPart =
       toolCallId: string
       toolName: string
       input: Record<string, unknown>
+      providerExecuted?: boolean
       providerMetadata?: Record<string, unknown>
     }
   | {
@@ -173,14 +175,20 @@ export class EventAdapter {
           id: event.callId,
           toolName: event.toolName,
           title: event.title,
+          providerExecuted: true,
         })
 
         // ACP ships tool calls with full input upfront; emit tool-call immediately.
+        // Tools are executed inside the Claude Code subprocess (provider-side), so
+        // mark them as such — otherwise the prompt loop in session/prompt.ts treats
+        // them as pending client-side work and re-prompts with the same user message,
+        // which makes Claude Code think it already responded "in a previous turn".
         out.push({
           type: "tool-call",
           toolCallId: event.callId,
           toolName: event.toolName,
           input: event.input,
+          providerExecuted: true,
         })
         this.#tools.get(event.callId)!.emittedCall = true
 
@@ -205,12 +213,19 @@ export class EventAdapter {
         // If we never emitted tool-call (shouldn't happen for ACP, but guard),
         // synthesize tool-input-start + tool-call now.
         if (state && !state.emittedCall) {
-          out.push({ type: "tool-input-start", id: event.callId, toolName, title: event.title })
+          out.push({
+            type: "tool-input-start",
+            id: event.callId,
+            toolName,
+            title: event.title,
+            providerExecuted: true,
+          })
           out.push({
             type: "tool-call",
             toolCallId: event.callId,
             toolName,
             input: event.input ?? {},
+            providerExecuted: true,
           })
           state.emittedCall = true
         }
