@@ -336,7 +336,11 @@ const live: Layer.Layer<
               const cfg = yield* config.get()
               const cwd = yield* Effect.sync(() => Instance.project.worktree ?? process.cwd())
               const bridge = yield* EffectBridge.make()
-              const agentPerm = input.permission ?? []
+              // The agent's ruleset (build/review/plan/...) is what governs
+              // tool permissions for this turn. The bridge always passes an
+              // empty ruleset because ACP requestPermission carries no rules
+              // of its own, so we merge here.
+              const agentPerm = Permission.merge(input.agent.permission, input.permission ?? [])
               const ask = async (i: {
                 sessionID: string
                 permission: string
@@ -354,7 +358,7 @@ const live: Layer.Layer<
                     patterns: i.patterns,
                     metadata: i.metadata,
                     always: i.always,
-                    ruleset: (i.ruleset as any) ?? agentPerm,
+                    ruleset: [...((i.ruleset as any[]) ?? []), ...agentPerm],
                     tool: i.tool as any,
                   }),
                 )
