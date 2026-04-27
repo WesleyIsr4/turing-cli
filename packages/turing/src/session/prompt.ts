@@ -154,11 +154,17 @@ export const layer = Layer.effect(
       return parts
     })
 
+    // Derives the session title from the first user message text. Previously
+    // this forked an `llm.stream` call into the session's claude-code provider,
+    // which collided on the same warm ACP session as the main turn (same pool
+    // key in session-pool.ts) and produced duplicated assistant responses. The
+    // claude-code branch in session/llm.ts also drops `system`, `tools`, and
+    // every message except the last user one — so the "Generate a title…"
+    // instruction was silently discarded and the model was just asked the
+    // user's prompt a second time. Slug the title locally instead.
     const title = Effect.fn("SessionPrompt.ensureTitle")(function* (input: {
       session: Session.Info
       history: MessageV2.WithParts[]
-      providerID: ProviderID
-      modelID: ModelID
     }) {
       if (input.session.parentID) return
       if (!Session.isDefaultTitle(input.session.title)) return
@@ -169,51 +175,24 @@ export const layer = Layer.effect(
       if (idx === -1) return
       if (input.history.filter(real).length !== 1) return
 
-      const context = input.history.slice(0, idx + 1)
-      const firstUser = context[idx]
+      const firstUser = input.history[idx]
       if (!firstUser || firstUser.info.role !== "user") return
-      const firstInfo = firstUser.info
 
-      const subtasks = firstUser.parts.filter((p): p is MessageV2.SubtaskPart => p.type === "subtask")
-      const onlySubtasks = subtasks.length > 0 && firstUser.parts.every((p) => p.type === "subtask")
-
-      const ag = yield* agents.get("title")
-      if (!ag) return
-      const mdl = ag.model
-        ? yield* provider.getModel(ag.model.providerID, ag.model.modelID)
-        : ((yield* provider.getSmallModel(input.providerID)) ??
-          (yield* provider.getModel(input.providerID, input.modelID)))
-      const msgs = onlySubtasks
-        ? [{ role: "user" as const, content: subtasks.map((p) => p.prompt).join("\n") }]
-        : yield* MessageV2.toModelMessagesEffect(context, mdl)
-      const text = yield* llm
-        .stream({
-          agent: ag,
-          user: firstInfo,
-          system: [],
-          small: true,
-          tools: {},
-          model: mdl,
-          sessionID: input.session.id,
-          retries: 2,
-          messages: [{ role: "user", content: "Generate a title for this conversation:\n" }, ...msgs],
-        })
-        .pipe(
-          Stream.filter((e): e is Extract<LLM.Event, { type: "text-delta" }> => e.type === "text-delta"),
-          Stream.map((e) => e.text),
-          Stream.mkString,
-          Effect.orDie,
+      const text = firstUser.parts
+        .filter(
+          (p): p is MessageV2.TextPart =>
+            p.type === "text" && !("synthetic" in p && p.synthetic) && !("ignored" in p && p.ignored),
         )
-      const cleaned = text
-        .replace(/<think>[\s\S]*?<\/think>\s*/g, "")
-        .split("\n")
-        .map((line) => line.trim())
-        .find((line) => line.length > 0)
-      if (!cleaned) return
-      const t = cleaned.length > 100 ? cleaned.substring(0, 97) + "..." : cleaned
+        .map((p) => p.text)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim()
+      if (!text) return
+
+      const t = text.length > 80 ? text.slice(0, 77) + "..." : text
       yield* sessions
         .setTitle({ sessionID: input.session.id, title: t })
-        .pipe(Effect.catchCause((cause) => elog.error("failed to generate title", { error: Cause.squash(cause) })))
+        .pipe(Effect.catchCause((cause) => elog.error("failed to set title", { error: Cause.squash(cause) })))
     })
 
     const insertReminders = Effect.fn("SessionPrompt.insertReminders")(function* (input: {
@@ -1363,12 +1342,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
 
           step++
           if (step === 1)
-            yield* title({
-              session,
-              modelID: lastUser.model.modelID,
-              providerID: lastUser.model.providerID,
-              history: msgs,
-            }).pipe(Effect.ignore, Effect.forkIn(scope))
+            yield* title({ session, history: msgs }).pipe(Effect.ignore, Effect.forkIn(scope))
 
           const model = yield* getModel(lastUser.model.providerID, lastUser.model.modelID, sessionID)
           const task = tasks.pop()
